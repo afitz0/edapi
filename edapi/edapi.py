@@ -247,7 +247,28 @@ class EdAPI:
             f"Failed to list threads for course {course_id}.", response.content
         )
 
-    def list_users(self, /, course_id: int) -> list[API_User_WithEmail]:
+    @_ensure_login
+    def list_all_threads(
+        self, /,
+        course_id: int,
+        sort: str = "new"
+    ) -> Generator[API_Thread_WithUser, None, None]:
+        """
+        Retrieve list of threads, with the given limit, offset, and sort.
+        """
+        offset = 0
+        for _ in range(100):
+            threads = self.list_threads(course_id, offset=offset, sort=sort)
+            if not threads:
+                break
+            yield from threads
+            offset += len(threads)
+
+    @_ensure_login
+    def list_users(
+        self, /,
+        course_id: int
+    ) -> list[API_User_WithEmail]:
         """
         Retrieve list of users.
 
