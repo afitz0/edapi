@@ -4,13 +4,15 @@ Module for interacting with the Ed API.
 
 import json
 import os
-from typing import NoReturn, Optional
+from typing import NoReturn, Optional, Generator
 
 import requests
 from dotenv import find_dotenv, load_dotenv
 from requests.compat import urljoin
 
-from edapi.types.api_types.endpoints.analytics import API_Analytics_Users_Response
+from edapi.types.api_types.endpoints.analytics import (
+    API_Analytics_Users_Response
+)
 
 from .types import (
     EdAuthError,
@@ -42,9 +44,11 @@ from .types.api_types.thread import (
 )
 from .types.api_types.user import API_User_WithEmail
 
-ANSI_BLUE = lambda text: f"\u001b[34m{text}\u001b[0m"
-ANSI_GREEN = lambda text: f"\u001b[32m{text}\u001b[0m"
-ANSI_RED = lambda text: f"\u001b[31m{text}\u001b[0m"
+
+def ANSI_BLUE(text): return f"\u001b[34m{text}\u001b[0m"
+def ANSI_GREEN(text): return f"\u001b[32m{text}\u001b[0m"
+def ANSI_RED(text): return f"\u001b[31m{text}\u001b[0m"
+
 
 API_BASE_URL = "https://us.edstem.org/api/"
 STATIC_FILE_BASE_URL = "https://static.us.edusercontent.com/files/"
@@ -56,7 +60,8 @@ Go to
     {ANSI_BLUE("https://edstem.org/us/settings/api-tokens")}
 and create a new API token.
 
-Create a {ANSI_BLUE(".env")} file (or set up environment variables) with the {API_TOKEN_ENV_VAR} environment variable set to the API token you just created.
+Create a {ANSI_BLUE(".env")} file (or set up environment variables) with the
+{API_TOKEN_ENV_VAR} environment variable set to the API token you just created.
 """
 
 
@@ -80,9 +85,10 @@ def _throw_error(message: str, error_content: bytes) -> NoReturn:
     error_json = json.loads(error_content)
     if error_json.get("code") == "bad_token":
         # auth error
-        raise EdAuthError(
-            {"message": f"Ed authentication error; {message}", "response": error_json}
-        )
+        raise EdAuthError({
+            "message": f"Ed authentication error; {message}",
+            "response": error_json
+        })
 
     # other error
     raise EdError({"message": message, "response": error_json})
@@ -92,7 +98,8 @@ class EdAPI:
     """
     Class for Ed API integration.
 
-    This class is responsible for authenticating the user, and for making API calls to the Ed API.
+    This class is responsible for authenticating the user, and for making API
+    calls to the Ed API.
     """
 
     def __init__(self):
@@ -131,7 +138,8 @@ class EdAPI:
         """
         Log in to the Ed API with the API token.
 
-        Continuously prompts for the API token if it is not found in the .env file.
+        Continuously prompts for the API token if it is not found in the .env
+        file.
         """
         user_info = None
         while self.api_token is None:
@@ -141,12 +149,12 @@ class EdAPI:
             user_info = self._load_api_token()
 
             if self.api_token is None:
-                print(
-                    ANSI_RED("Invalid API Token; make sure you have the correct token.")
-                )
+                print(ANSI_RED("Invalid API Token; make sure you have " +
+                               "the correct token."))
 
         if user_info is None:
-            # only way this is reached is if the token was initially loaded successfully.
+            # only way this is reached is if the token was initially
+            # loaded successfully.
             user_info = self.get_user_info()
 
         # print login welcome message
@@ -218,20 +226,26 @@ class EdAPI:
             return response_json.get("items", [])  # default to empty list
 
         _throw_error(
-            f"Failed to list user activity for user {user_id} in course {course_id}.",
+            f"Failed to list user activity for user {user_id} " +
+            f"in course {course_id}.",
             response.content,
         )
 
     @_ensure_login
     def list_threads(
-        self, /, course_id: int, *, limit: int = 30, offset: int = 0, sort: str = "new"
+        self, /,
+        course_id: int,
+        *,
+        limit: int = 30,
+        offset: int = 0,
+        sort: str = "new"
     ) -> list[API_Thread_WithUser]:
         """
         Retrieve list of threads, with the given limit, offset, and sort.
 
-        Limit can range from 1 to 100 (anything higher will get clipped to 100).
-        Offset can be used to list out all of the threads in a course iteratively,
-        through pagination.
+        Limit can range from 1 to 100 (anything higher will get clipped to
+        100). Offset can be used to list out all of the threads in a course
+        iteratively, through pagination.
 
         GET /api/courses/<course_id>/threads
         """
@@ -244,7 +258,8 @@ class EdAPI:
             return response_json["threads"]
 
         _throw_error(
-            f"Failed to list threads for course {course_id}.", response.content
+            f"Failed to list threads for course {course_id}.",
+            response.content
         )
 
     @_ensure_login
@@ -274,13 +289,15 @@ class EdAPI:
 
         GET /api/courses/<course_id>/analytics/users
         """
-        list_url = urljoin(API_BASE_URL, f"courses/{course_id}/analytics/users")
+        list_url = urljoin(
+            API_BASE_URL, f"courses/{course_id}/analytics/users")
         response = self.session.get(list_url)
         if response.ok:
             response_json: API_Analytics_Users_Response = response.json()
             return response_json["users"]
 
-        _throw_error(f"Failed to list users for course {course_id}", response.content)
+        _throw_error(f"Failed to list users for course {course_id}",
+                     response.content)
 
     @_ensure_login
     def get_thread(self, thread_id: int) -> API_Thread_WithComments:
@@ -302,7 +319,8 @@ class EdAPI:
         self, course_id: int, thread_number: int
     ) -> API_Thread_WithComments:
         """
-        Retrieve the details for a thread in a given course, using the thread number.
+        Retrieve the details for a thread in a given course,
+        using the thread number.
 
         GET /api/courses/<course_id>/threads/<thread_id>
         """
@@ -314,7 +332,8 @@ class EdAPI:
             response_json: API_GetThread_Response = response.json()
             return response_json["thread"]
 
-        _throw_error(f"Failed to get thread {thread_number}.", response.content)
+        _throw_error(f"Failed to get thread {thread_number}.",
+                     response.content)
 
     @_ensure_login
     def post_thread(
@@ -404,7 +423,8 @@ class EdAPI:
 
         # set items
         for key, val in params.items():
-            # ensure we're only modifying values that have appeared in the existing thread object
+            # ensure we're only modifying values that have appeared in the
+            # existing thread object
             if key in thread and val is not None:
                 thread[key] = val
 
@@ -423,13 +443,21 @@ class EdAPI:
         _throw_error(f"Failed to edit thread {thread_id}.", response.content)
 
     @_ensure_login
-    def upload_file(self, filename: str, file: bytes, content_type: str) -> str:
+    def upload_file(
+        self,
+        filename: str,
+        file: bytes,
+        content_type: str
+    ) -> str:
         """
         Upload a file to Ed.
 
-        `filename` is used as the filename for the file when uploading.
-        `file` is the raw bytestream from `open(..., "rb")` after calling `.read()`.
-        `content_type` is the MIME type of the file.
+        `filename`:
+            the filename for the file when uploading.
+        `file`:
+            the raw bytestream from `open(..., "rb")` after calling `.read()`.
+        `content_type`:
+            the MIME type of the file.
 
         POST /api/files
 
@@ -456,7 +484,8 @@ class EdAPI:
         lock_url = urljoin(API_BASE_URL, f"threads/{thread_id}/lock")
         response = self.session.post(lock_url)
         if not response.ok:
-            _throw_error(f"Failed to lock thread {thread_id}.", response.content)
+            _throw_error(f"Failed to lock thread {thread_id}.",
+                         response.content)
 
     @_ensure_login
     def unlock_thread(self, thread_id: int) -> None:
@@ -468,4 +497,5 @@ class EdAPI:
         unlock_url = urljoin(API_BASE_URL, f"threads/{thread_id}/unlock")
         response = self.session.post(unlock_url)
         if not response.ok:
-            _throw_error(f"Failed to unlock thread {thread_id}.", response.content)
+            _throw_error(f"Failed to unlock thread {thread_id}.",
+                         response.content)
