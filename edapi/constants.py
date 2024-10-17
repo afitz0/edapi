@@ -9,5 +9,5 @@ class ThreadType:
     """
 
     POST = "post"
-    QUESTIION = "question"
+    QUESTION = "question"
     ANNOUNCEMENT = "announcement"
