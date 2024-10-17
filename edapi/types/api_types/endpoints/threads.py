@@ -5,7 +5,11 @@ Types for endpoints involving creating and updating threads.
 from typing import Any, Optional, TypedDict
 
 from ..content import ContentString
-from ..thread import API_Thread_WithComments, API_Thread_WithUser
+from ..thread import (
+    API_Thread_WithComments,
+    API_Thread_WithUser,
+    API_Thread_Draft_WithUser
+)
 from ..user import API_User_Short
 
 # === GET /api/threads/<thread_id> ===
@@ -73,6 +77,13 @@ class API_PostThread_Response(TypedDict):
     bot: Any  # TODO: inplement bot types
     status: str  # only seen "ok"
     thread: API_Thread_WithUser
+
+
+class API_PostDraft_Response(TypedDict):
+    """
+    Response type for POST /api/courses/<course_id>/thread_drafts.
+    """
+    thread_draft: API_Thread_WithUser
 
 
 # === PUT /api/threads/<thread_id> ===
@@ -153,3 +164,13 @@ class API_PutThread_Response_Thread(TypedDict):
     deleted_at: Optional[str]
     pinned_at: Optional[str]
     anonymous_id: int
+
+
+class API_ScheduleDraft_Response(TypedDict):
+    """
+    Response type for PUT /api/thread_drafts/<thread_id>/schedule.
+    """
+
+    bot: Any  # TODO: inplement bot types
+    status: str  # only seen "ok"
+    thread_draft: API_Thread_Draft_WithUser

@@ -60,6 +60,35 @@ class API_Thread(TypedDict):
     duplicate_title: Optional[str]
 
 
+class API_Thread_Draft(TypedDict):
+    """
+    Thread type used in the Ed API.
+    """
+
+    id: int
+    user_id: int
+    course_id: int
+    type: str
+    title: str
+    content: str
+    category: str
+    subcategory: str
+    subsubcategory: str
+    is_pinned: bool
+    is_private: bool
+    is_anonymous: bool
+    is_megathread: bool
+    anonymous_comments: bool
+    created_at: str
+    updated_at: Optional[str]
+    scheduled_time: str
+    send_emails: bool
+
+
+class API_Thread_Draft_WithUser(API_Thread_Draft):
+    user: API_User_Short
+
+
 class API_Thread_WithComments(API_Thread):
     """
     Thread type with comments and answers included.

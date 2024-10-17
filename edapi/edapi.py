@@ -12,7 +12,13 @@ from requests.compat import urljoin
 
 from edapi.types.api_types.endpoints.analytics import API_Analytics_Users_Response
 
-from .types import EdAuthError, EdError, EditThreadParams, PostThreadParams
+from .types import (
+    EdAuthError,
+    EdError,
+    EditThreadParams,
+    PostThreadParams,
+    ScheduleThreadParams
+)
 from .types.api_types.endpoints.activity import (
     API_ListUserActivity_Response,
     API_ListUserActivity_Response_Item,
@@ -22,12 +28,18 @@ from .types.api_types.endpoints.threads import (
     API_GetThread_Response,
     API_ListThreads_Response,
     API_PostThread_Response,
+    API_PostDraft_Response,
     API_PutThread_Request,
     API_PutThread_Response,
     API_PutThread_Response_Thread,
+    API_ScheduleDraft_Response
 )
 from .types.api_types.endpoints.user import API_User_Response
-from .types.api_types.thread import API_Thread_WithComments, API_Thread_WithUser
+from .types.api_types.thread import (
+    API_Thread_WithComments,
+    API_Thread_WithUser,
+    API_Thread_Draft_WithUser
+)
 from .types.api_types.user import API_User_WithEmail
 
 ANSI_BLUE = lambda text: f"\u001b[34m{text}\u001b[0m"
@@ -300,7 +312,48 @@ class EdAPI:
             response_json: API_PostThread_Response = response.json()
             return response_json["thread"]
 
-        _throw_error(f"Failed to post thread in course {course_id}.", response.content)
+        _throw_error(f"Failed to post thread in course {course_id}.",
+                     response.content)
+
+    @_ensure_login
+    def post_draft(
+        self, course_id: int, params: PostThreadParams
+    ) -> API_Thread_WithUser:
+        """
+        Creates a new thread draft in the given course.
+
+        POST /api/courses/<course_id>/thread_drafts
+        """
+        thread_url = urljoin(API_BASE_URL, f"courses/{course_id}/threads")
+        response = self.session.post(thread_url, json={"thread_draft": params})
+
+        if response.ok:
+            response_json: API_PostDraft_Response = response.json()
+            return response_json["thread_draft"]
+
+        _throw_error(f"Failed to post draft in course {course_id}.",
+                     response.content)
+
+    @_ensure_login
+    def schedule_draft(
+        self, course_id: int, thread_id: int, params: ScheduleThreadParams
+    ) -> API_Thread_Draft_WithUser:
+        """
+        Creates a new thread draft in the given course.
+
+        PATCH /api/thread_drafts/<thread_id>/schedule'
+        """
+        schedule_url = urljoin(API_BASE_URL,
+                               f'/thread_drafts/{thread_id}/schedule')
+        response = self.session.patch(schedule_url,
+                                      params=params)
+
+        if response.ok:
+            response_json: API_ScheduleDraft_Response = response.json()
+            return response_json["thread_draft"]
+
+        _throw_error(f"Failed to post draft in course {course_id}.",
+                     response.content)
 
     @_ensure_login
     def edit_thread(

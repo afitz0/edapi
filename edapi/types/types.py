@@ -53,3 +53,13 @@ class PostThreadParams(TypedDict, total=True):
     is_anonymous: bool
     is_megathread: bool
     anonymous_comments: bool
+
+
+class ScheduleThreadParams(TypedDict, total=True):
+    """
+    Parameters for scheduling a thread.
+    All parameters are required.
+    """
+
+    send_emails: int
+    scheduled_time: str
